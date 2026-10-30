@@ -1,0 +1,100 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 59dfd73eded5b4d0f9286ecdb4b25a13, type: 3}
+  m_Name: SandboxArt
+  m_EditorClassIdentifier: Assembly-CSharp::SandboxArt
+  sprites:
+  - key: Characters/astro_down_0
+    sprite: {fileID: 21300000, guid: 53a1f3a4be6d341268b388d17eb4f3e4, type: 3}
+  - key: Characters/astro_down_0_glow
+    sprite: {fileID: 21300000, guid: 7d657088ca507472f8bc4b5b5883537b, type: 3}
+  - key: Characters/astro_down_1
+    sprite: {fileID: 21300000, guid: c268e4277243448158f895db41255c1b, type: 3}
+  - key: Characters/astro_down_1_glow
+    sprite: {fileID: 21300000, guid: 2c15f919b33624c82be29941c29266b2, type: 3}
+  - key: Characters/astro_down_2
+    sprite: {fileID: 21300000, guid: c72c201ebdddb46be82ef649ada07872, type: 3}
+  - key: Characters/astro_down_2_glow
+    sprite: {fileID: 21300000, guid: 39e66e5f9a9464c4c8cd8ce3e100077f, type: 3}
+  - key: Characters/astro_side_0
+    sprite: {fileID: 21300000, guid: 607a1e08a5b02404da8f913347646060, type: 3}
+  - key: Characters/astro_side_0_glow
+    sprite: {fileID: 21300000, guid: dfc9bdf13bffe42809c3742207d18c86, type: 3}
+  - key: Characters/astro_side_1
+    sprite: {fileID: 21300000, guid: ab9f33a8180b44aaca92c8347231de3c, type: 3}
+  - key: Characters/astro_side_1_glow
+    sprite: {fileID: 21300000, guid: 42a6703912ab242938f023104d01b804, type: 3}
+  - key: Characters/astro_side_2
+    sprite: {fileID: 21300000, guid: 9397cd79555b044218d497e3f32f7c10, type: 3}
+  - key: Characters/astro_side_2_glow
+    sprite: {fileID: 21300000, guid: 57c9e824438d0451ea8304852d8cb6d3, type: 3}
+  - key: Characters/astro_up_0
+    sprite: {fileID: 21300000, guid: dac8fa612993444778d89233def203b4, type: 3}
+  - key: Characters/astro_up_0_glow
+    sprite: {fileID: 21300000, guid: 42bf0c4f4e1b44d90abb06dda9813423, type: 3}
+  - key: Characters/astro_up_1
+    sprite: {fileID: 21300000, guid: 690e2a2bf01ad442f80230849359c07c, type: 3}
+  - key: Characters/astro_up_1_glow
+    sprite: {fileID: 21300000, guid: c0911c0998fc54fa6a21e4daae51d39d, type: 3}
+  - key: Characters/astro_up_2
+    sprite: {fileID: 21300000, guid: ebddeaa3106b043f8bc4b3bffba2fe14, type: 3}
+  - key: Characters/astro_up_2_glow
+    sprite: {fileID: 21300000, guid: be11a4b4407c5458d96cfd66784e3155, type: 3}
+  - key: Characters/drone
+    sprite: {fileID: 21300000, guid: 404b1db56a8384d579368a9603dddb92, type: 3}
+  - key: Characters/drone_glow
+    sprite: {fileID: 21300000, guid: 8fb0b7fde00334392bd9372c25e569b3, type: 3}
+  - key: Characters/shadow
+    sprite: {fileID: 21300000, guid: f94ee779b2a5544ac9f2a180087eda23, type: 3}
+  - key: Props/beacon
+    sprite: {fileID: 21300000, guid: 00796152389c7435fb5434dde24e8551, type: 3}
+  - key: Props/beacon_glow
+    sprite: {fileID: 21300000, guid: f33d933f7d7e84ef1abb2eeb64940807, type: 3}
+  - key: Props/crate
+    sprite: {fileID: 21300000, guid: 89811aa871e414dbcba5727fc758a5d5, type: 3}
+  - key: Props/glowplant
+    sprite: {fileID: 21300000, guid: e4adfcf365eb247a88997005886e945e, type: 3}
+  - key: Props/glowplant_glow
+    sprite: {fileID: 21300000, guid: d3242a3dbb6034651ba75c163b659ac1, type: 3}
+  - key: Props/lamp
+    sprite: {fileID: 21300000, guid: 19b6b061d390845e8babdb46a4692495, type: 3}
+  - key: Props/lamp_glow
+    sprite: {fileID: 21300000, guid: 1018ee6a149114209b1d3045de4ce439, type: 3}
+  - key: Props/pillar
+    sprite: {fileID: 21300000, guid: 84ab1af1f81854b658632c57610bb67f, type: 3}
+  - key: Props/pillar_glow
+    sprite: {fileID: 21300000, guid: 5e7bffba901664ac9b20fe65e77ee31e, type: 3}
+  - key: Props/rock_0
+    sprite: {fileID: 21300000, guid: 3e56a2d253bfb43ae80ef3d537de16e5, type: 3}
+  - key: Props/rock_1
+    sprite: {fileID: 21300000, guid: d19a17f2761ac4ffb9173ccf4fdbf6fe, type: 3}
+  - key: Tiles/deck_0
+    sprite: {fileID: 21300000, guid: 673c3cce903a14406980755fa90cad25, type: 3}
+  - key: Tiles/deck_1
+    sprite: {fileID: 21300000, guid: ab9056e07b917463f893f99508ffb3c4, type: 3}
+  - key: Tiles/deck_2
+    sprite: {fileID: 21300000, guid: 665c07cc1e9c7485a8f7f41e17cdbbda, type: 3}
+  - key: Tiles/deck_3
+    sprite: {fileID: 21300000, guid: 4bae222c21893400d99df5658ae76273, type: 3}
+  - key: Tiles/moss_0
+    sprite: {fileID: 21300000, guid: e9f9e9187c0914c488f3fc2395d60e64, type: 3}
+  - key: Tiles/moss_1
+    sprite: {fileID: 21300000, guid: cea8bd156dd9e4ce894e5aec8f1d0c96, type: 3}
+  - key: Tiles/moss_2
+    sprite: {fileID: 21300000, guid: 8b74d14ea8f4340b789b79fdd8f2dc71, type: 3}
+  - key: Tiles/moss_3
+    sprite: {fileID: 21300000, guid: d14e12804574041a2ae347fda5547e68, type: 3}
+  lit: {fileID: 2100000, guid: a97c105638bdf8b4a8650670310a4cd3, type: 2}
+  unlit: {fileID: 2100000, guid: 9dfc825aed78fcd4ba02077103263b40, type: 2}
+  battleBackground: {fileID: 2800000, guid: 5063b64355f1142f689689fade3d3b7d, type: 3}
+  drone: {fileID: 11400000, guid: 870ca306f98884a3680866f6c9dc5ba7, type: 2}
+  sentinel: {fileID: 11400000, guid: c6dfef82118db442c81b5bd35c81f625, type: 2}

@@ -27,17 +27,20 @@ namespace Game.Combat
 
         public bool IsAlive => Hp > 0;
 
-        public Combatant(string name, Team team, int maxHp, int attack, int defense, int speed)
+        /// <param name="currentHp">PV au début du combat (blessures d'un combat précédent). Vide = PV max.</param>
+        public Combatant(string name, Team team, int maxHp, int attack, int defense, int speed, int? currentHp = null)
         {
             if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("Le nom est obligatoire.", nameof(name));
             if (maxHp <= 0) throw new ArgumentOutOfRangeException(nameof(maxHp), "Les PV max doivent être > 0.");
             if (attack < 0) throw new ArgumentOutOfRangeException(nameof(attack));
             if (defense < 0) throw new ArgumentOutOfRangeException(nameof(defense));
+            if (currentHp.HasValue && currentHp.Value <= 0)
+                throw new ArgumentOutOfRangeException(nameof(currentHp), "Un combattant entre en combat avec au moins 1 PV.");
 
             Name = name;
             Team = team;
             MaxHp = maxHp;
-            Hp = maxHp;
+            Hp = currentHp.HasValue ? Math.Min(currentHp.Value, maxHp) : maxHp;
             Attack = attack;
             Defense = defense;
             Speed = speed;

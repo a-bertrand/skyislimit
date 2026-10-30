@@ -6,6 +6,9 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+    path: Assets/_Game/Scenes/Sandbox.unity
+    guid: 719c44aff45234fdead0192587ecf71f
+  - enabled: 1
     path: Assets/Scenes/SampleScene.unity
     guid: 8c9cfa26abfee488c85f1582747f6a02
   - enabled: 1
@@ -14,5 +17,11 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/_Game/Scenes/Combat.unity
     guid: 13db3060708344590a2c3ea4e98b9770
+  - enabled: 1
+    path: Assets/_Game/Scenes/Station.unity
+    guid: 42d3c139ac0fd4e128391fe1e8c43d69
+  - enabled: 1
+    path: Assets/_Game/Scenes/SandboxCombat.unity
+    guid: bfd424bde89234a5aa8b559c884e2693
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}

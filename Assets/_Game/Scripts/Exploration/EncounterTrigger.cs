@@ -17,11 +17,21 @@ public class EncounterTrigger : MonoBehaviour
     [SerializeField] private float armDelay = 1f;
 
     private bool triggered;
+    private string combatScene = GameSession.CombatSceneName;
+    private float armedAt;
+
+    public void Setup(string id, CombatantDefinition definition, string scene)
+    {
+        encounterId = id;
+        enemy = definition;
+        combatScene = scene;
+    }
 
     private string Id => string.IsNullOrEmpty(encounterId) ? $"{gameObject.scene.name}/{gameObject.name}" : encounterId;
 
     private void Awake()
     {
+        armedAt = Time.time + armDelay;
         if (GameSession.IsDefeated(Id))
         {
             gameObject.SetActive(false);
@@ -34,15 +44,17 @@ public class EncounterTrigger : MonoBehaviour
         col.isTrigger = true;
     }
 
-    private void OnTriggerEnter2D(Collider2D other)
+    private void OnTriggerEnter2D(Collider2D other) => TryEncounter(other);
+    private void OnTriggerStay2D(Collider2D other) => TryEncounter(other);
+
+    private void TryEncounter(Collider2D other)
     {
         // Délai de grâce : évite de relancer le combat si on revient sur la carte collé à l'ennemi
-        if (triggered || Time.timeSinceLevelLoad < armDelay) return;
+        if (triggered || Time.time < armedAt || GameMenu.IsOpen || SceneTransition.IsBusy || GameSession.HasPendingEncounter) return;
 
         var player = other.GetComponentInParent<PlayerMovement>();
         if (player == null) return;
 
-        triggered = true;
-        GameSession.StartEncounter(Id, enemy, player.transform.position);
+        triggered = GameSession.StartEncounter(Id, enemy, player.transform.position, combatScene);
     }
 }

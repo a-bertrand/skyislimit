@@ -3,232 +3,241 @@ using System.Collections.Generic;
 using System.Linq;
 using Game.Combat;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
-/// <summary>
-/// Affichage PROTOTYPE d'un combat : relie le moteur (Game.Combat) à l'écran.
-/// Aucune règle de jeu ici : ce script lit les événements du moteur et les montre.
-/// Interface en IMGUI (OnGUI) pour ne rien avoir à monter dans l'éditeur ; la vraie UI viendra plus tard.
-/// À poser sur un GameObject vide dans la scène Combat.
-/// </summary>
+/// <summary>Présentation du moteur pur : commandes, sprites, attaques séquencées et retour sur la carte.</summary>
 public class BattleController : MonoBehaviour
 {
-    [Header("Données (optionnel : valeurs par défaut sinon)")]
-    [SerializeField] private CombatantDefinition hero;
     [SerializeField] private CombatantDefinition enemy;
-
-    [Header("Rythme")]
-    [SerializeField] private float enemyTurnDelay = 0.8f;
-
-    private const int MaxLogLines = 8;
-    private const float VirtualHeight = 540f; // l'UI est dessinée pour 960x540 puis mise à l'échelle
-
+    [SerializeField] private SandboxArt art;
+    [SerializeField] private float enemyTurnDelay = 0.55f;
     private Battle battle;
+    private Combatant heroCombatant;
     private readonly IActionSelector enemyAI = new BasicEnemyAI();
     private readonly List<string> log = new List<string>();
     private readonly Dictionary<Combatant, SpriteRenderer> views = new Dictionary<Combatant, SpriteRenderer>();
-    private readonly Dictionary<Combatant, Color> baseColors = new Dictionary<Combatant, Color>();
-    private bool waitingForEnemy;
-    private static Sprite squareSprite;
+    private readonly Dictionary<Combatant, Color> colors = new Dictionary<Combatant, Color>();
+    private bool busy;
+    private Sprite backgroundSprite, fallbackSprite;
+    private SpriteRenderer background;
+    private string damageText;
+    private Vector3 damagePosition;
+    private enum Command { None, Attack, Defend, Return, Restart }
+    private Command pending;
 
-    // Un clic dans OnGUI est seulement mémorisé, puis exécuté dans Update :
-    // modifier l'état pendant OnGUI casse la mise en page IMGUI.
-    private enum PlayerCommand { None, Attack, Defend, Restart, ReturnToMap }
-    private PlayerCommand pendingCommand;
-
-    private void Start() => SetupBattle();
+    public void Configure(SandboxArt visuals) => art = visuals;
+    private bool IsPlayerTurn => battle != null && !battle.IsOver && !busy && !SceneTransition.IsBusy && battle.CurrentActor.Team == Team.Player;
+    private void Start()
+    {
+        if (art != null && art.battleBackground != null)
+        {
+            if (Camera.main != null && Camera.main.GetComponent<PrototypeViewport>() == null)
+                Camera.main.gameObject.AddComponent<PrototypeViewport>();
+            var texture = art.battleBackground;
+            backgroundSprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), Vector2.one * 0.5f, texture.height / 11.25f);
+            background = new GameObject("Décor de combat").AddComponent<SpriteRenderer>();
+            background.transform.SetParent(transform, false);
+            background.sprite = backgroundSprite; background.sortingOrder = -200; background.sharedMaterial = art.unlit;
+        }
+        SetupBattle(false);
+    }
 
     private void Update()
     {
-        var command = pendingCommand;
-        pendingCommand = PlayerCommand.None;
-
+        if (background != null && Camera.main != null)
+        {
+            float scale = Mathf.Max(1, Camera.main.aspect / ((float)art.battleBackground.width / art.battleBackground.height));
+            background.transform.localScale = Vector3.one * scale;
+        }
+        if (SceneTransition.IsBusy) { pending = Command.None; return; }
+        var keyboard = Keyboard.current;
+        bool confirm = keyboard?.enterKey.wasPressedThisFrame == true || keyboard?.spaceKey.wasPressedThisFrame == true || Gamepad.current?.buttonSouth.wasPressedThisFrame == true;
+        bool guard = keyboard?.gKey.wasPressedThisFrame == true || Gamepad.current?.buttonWest.wasPressedThisFrame == true;
+        if (!busy)
+        {
+            if (battle.IsOver && confirm) pending = GameSession.HasPendingEncounter ? Command.Return : Command.Restart;
+            else if (IsPlayerTurn && confirm) pending = Command.Attack;
+            else if (IsPlayerTurn && guard) pending = Command.Defend;
+            if (battle.IsOver && battle.Winner != Team.Player && keyboard?.rKey.wasPressedThisFrame == true) pending = Command.Restart;
+        }
+        var command = pending; pending = Command.None;
         switch (command)
         {
-            case PlayerCommand.Attack: PlayerAttack(); break;
-            case PlayerCommand.Defend: PlayerDefend(); break;
-            case PlayerCommand.Restart: SetupBattle(); break;
-            case PlayerCommand.ReturnToMap: GameSession.EndEncounter(battle.Winner == Team.Player); break;
+            case Command.Attack:
+                if (IsPlayerTurn) StartCoroutine(Resolve(CombatAction.Attack(battle.CurrentActor, battle.AliveOpponentsOf(battle.CurrentActor).First())));
+                break;
+            case Command.Defend:
+                if (IsPlayerTurn) StartCoroutine(Resolve(CombatAction.Defend(battle.CurrentActor)));
+                break;
+            case Command.Return:
+                if (!busy && battle.IsOver) ReturnToMap();
+                break;
+            case Command.Restart:
+                if (!busy && battle.IsOver) SetupBattle(true);
+                break;
         }
     }
 
-    private void SetupBattle()
+    private void SetupBattle(bool restoreHealth)
     {
         StopAllCoroutines();
         foreach (var view in views.Values) Destroy(view.gameObject);
-        views.Clear();
-        baseColors.Clear();
-        log.Clear();
-        waitingForEnemy = false;
-
-        var h = hero != null ? hero.Create(Team.Player) : new Combatant("Héros", Team.Player, 40, 12, 6, 10);
-        // L'ennemi touché sur la carte est prioritaire sur celui réglé dans l'Inspector
-        var enemyDef = GameSession.PendingEnemy != null ? GameSession.PendingEnemy : enemy;
-        var e = enemyDef != null ? enemyDef.Create(Team.Enemy) : new Combatant("Drone pirate", Team.Enemy, 50, 11, 4, 8);
-
-        battle = new Battle(new[] { h, e });
-        // Positions décalées vers la droite pour laisser la place au panneau d'interface à gauche
-        SpawnView(h, new Vector3(0f, 0f, 0f), hero != null ? hero.placeholderColor : new Color(0.35f, 0.65f, 1f));
-        SpawnView(e, new Vector3(4.5f, 0f, 0f), enemyDef != null ? enemyDef.placeholderColor : new Color(1f, 0.4f, 0.4f));
-
-        Handle(battle.Start());
+        views.Clear(); colors.Clear(); log.Clear(); damageText = null; pending = Command.None;
+        if (restoreHealth) GameSession.Leader.Hp = GameSession.Leader.MaxHp;
+        heroCombatant = GameSession.Leader.ToCombatant();
+        var definition = GameSession.PendingEnemy != null ? GameSession.PendingEnemy : enemy;
+        var opponent = definition != null ? definition.Create(Team.Enemy) : new Combatant("Drone pirate", Team.Enemy, 50, 11, 4, 8);
+        battle = new Battle(new[] { heroCombatant, opponent });
+        Spawn(heroCombatant, new Vector3(-4, -0.9f, 0), Color.white, true);
+        Spawn(opponent, new Vector3(4, -0.5f, 0), definition != null ? definition.placeholderColor : Color.white, false);
+        StartCoroutine(Opening());
     }
 
-    // ---------- Actions du joueur ----------
-
-    private bool IsPlayerTurn =>
-        battle != null && !battle.IsOver && !waitingForEnemy && battle.CurrentActor.Team == Team.Player;
-
-    private void PlayerAttack()
+    private IEnumerator Opening()
     {
-        if (!IsPlayerTurn) return;
-        var actor = battle.CurrentActor;
-        var target = battle.AliveOpponentsOf(actor).First(); // un seul ennemi pour l'instant
-        Handle(battle.Execute(CombatAction.Attack(actor, target)));
+        busy = true;
+        yield return Present(battle.Start());
+        yield return EnemyTurns();
+        busy = false;
     }
 
-    private void PlayerDefend()
+    private IEnumerator Resolve(CombatAction action)
     {
-        if (!IsPlayerTurn) return;
-        Handle(battle.Execute(CombatAction.Defend(battle.CurrentActor)));
+        busy = true; // Bloque les doubles clics jusqu'à la fin de l'animation ET de la réponse ennemie.
+        yield return Present(battle.Execute(action));
+        yield return EnemyTurns();
+        busy = false;
     }
 
-    // ---------- Boucle : afficher les événements, puis faire jouer l'ennemi si c'est son tour ----------
-
-    private void Handle(IReadOnlyList<CombatEvent> events)
+    private IEnumerator EnemyTurns()
     {
-        foreach (var ev in events) Show(ev);
-
-        if (!battle.IsOver && battle.CurrentActor.Team == Team.Enemy)
-            StartCoroutine(EnemyTurn());
-    }
-
-    private IEnumerator EnemyTurn()
-    {
-        waitingForEnemy = true;
-        yield return new WaitForSeconds(enemyTurnDelay);
-        waitingForEnemy = false;
-
-        var action = enemyAI.Choose(battle, battle.CurrentActor);
-        Handle(battle.Execute(action));
-    }
-
-    private void Show(CombatEvent ev)
-    {
-        switch (ev.Kind)
+        while (!battle.IsOver && battle.CurrentActor.Team == Team.Enemy)
         {
-            case CombatEventKind.RoundStarted:
-                AddLog($"— Manche {ev.Round} —");
-                break;
-            case CombatEventKind.Attacked:
-                AddLog($"{ev.Actor.Name} attaque {ev.Target.Name} : {ev.Amount} dégâts");
-                StartCoroutine(HitFlash(ev.Target));
-                break;
-            case CombatEventKind.Defended:
-                AddLog($"{ev.Actor.Name} se met en garde");
-                break;
-            case CombatEventKind.Defeated:
-                AddLog($"{ev.Target.Name} est hors de combat !");
-                if (views.TryGetValue(ev.Target, out var view)) view.color = new Color(0.3f, 0.3f, 0.3f, 0.5f);
-                break;
-            case CombatEventKind.BattleEnded:
-                AddLog(ev.Winner == Team.Player ? "VICTOIRE !" : "Défaite...");
-                break;
-            // TurnStarted : rien à écrire, l'interface affiche déjà à qui c'est le tour
+            yield return new WaitForSeconds(enemyTurnDelay);
+            yield return Present(battle.Execute(enemyAI.Choose(battle, battle.CurrentActor)));
         }
     }
 
-    private void AddLog(string line)
+    private IEnumerator Present(IReadOnlyList<CombatEvent> events)
     {
-        log.Add(line);
-        if (log.Count > MaxLogLines) log.RemoveAt(0);
-    }
-
-    // ---------- Visuels placeholder ----------
-
-    private void SpawnView(Combatant combatant, Vector3 position, Color color)
-    {
-        if (squareSprite == null)
-            squareSprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 4, 4), new Vector2(0.5f, 0.5f), 4f);
-
-        var go = new GameObject(combatant.Name);
-        go.transform.SetParent(transform, false);
-        go.transform.position = position;
-        go.transform.localScale = Vector3.one * 1.5f;
-
-        var sr = go.AddComponent<SpriteRenderer>();
-        sr.sprite = squareSprite;
-        sr.color = color;
-
-        views[combatant] = sr;
-        baseColors[combatant] = color;
-    }
-
-    private IEnumerator HitFlash(Combatant target)
-    {
-        if (!views.TryGetValue(target, out var view)) yield break;
-
-        var origin = view.transform.position;
-        for (var i = 0; i < 4; i++)
+        foreach (var e in events)
         {
-            view.color = i % 2 == 0 ? Color.white : baseColors[target];
-            view.transform.position = origin + new Vector3(i % 2 == 0 ? 0.15f : -0.15f, 0f, 0f);
-            yield return new WaitForSeconds(0.05f);
+            switch (e.Kind)
+            {
+                case CombatEventKind.RoundStarted: AddLog("— Manche " + e.Round + " —"); break;
+                case CombatEventKind.Attacked:
+                    AddLog(e.Actor.Name + " : " + e.Amount + " dégâts sur " + e.Target.Name);
+                    yield return AttackAnimation(e.Actor, e.Target, e.Amount);
+                    break;
+                case CombatEventKind.Defended:
+                    AddLog(e.Actor.Name + " se protège. Prochains dégâts divisés par deux.");
+                    views[e.Actor].color = PrototypeGui.Cyan;
+                    yield return new WaitForSeconds(0.28f);
+                    views[e.Actor].color = colors[e.Actor];
+                    break;
+                case CombatEventKind.Defeated:
+                    AddLog(e.Target.Name + " neutralisé.");
+                    views[e.Target].color = new Color(0.4f, 0.45f, 0.6f, 0.35f);
+                    yield return new WaitForSeconds(0.2f);
+                    break;
+                case CombatEventKind.BattleEnded: AddLog(e.Winner == Team.Player ? "Victoire ! La zone est plus sûre." : "Défaite. Retour au point de départ avec tous tes PV."); break;
+            }
         }
-        view.transform.position = origin;
-        view.color = target.IsAlive ? baseColors[target] : new Color(0.3f, 0.3f, 0.3f, 0.5f);
     }
 
-    // ---------- Interface prototype (IMGUI) ----------
+    private IEnumerator AttackAnimation(Combatant actor, Combatant target, int amount)
+    {
+        var attacker = views[actor]; var defender = views[target];
+        var origin = attacker.transform.position;
+        var destination = origin + (defender.transform.position - origin).normalized * 1.5f;
+        for (float t = 0; t < 0.16f; t += Time.deltaTime)
+        { attacker.transform.position = Vector3.Lerp(origin, destination, t / 0.16f); yield return null; }
+        damageText = "−" + amount;
+        damagePosition = defender.transform.position + Vector3.up * 2;
+        var targetOrigin = defender.transform.position;
+        for (int i = 0; i < 4; i++)
+        {
+            defender.color = i % 2 == 0 ? new Color(1, 0.3f, 0.35f) : Color.white;
+            defender.transform.position = targetOrigin + Vector3.right * (i % 2 == 0 ? 0.14f : -0.14f);
+            damagePosition += Vector3.up * 0.08f;
+            yield return new WaitForSeconds(0.055f);
+        }
+        defender.transform.position = targetOrigin; defender.color = colors[target];
+        for (float t = 0; t < 0.16f; t += Time.deltaTime)
+        { attacker.transform.position = Vector3.Lerp(destination, origin, t / 0.16f); yield return null; }
+        attacker.transform.position = origin; damageText = null;
+    }
+
+    private void Spawn(Combatant combatant, Vector3 position, Color color, bool hero)
+    {
+        var view = new GameObject(combatant.Name).AddComponent<SpriteRenderer>();
+        view.transform.SetParent(transform, false); view.transform.position = position;
+        view.transform.localScale = Vector3.one * 1.8f;
+        if (art != null)
+        {
+            view.sprite = art.Sprite(hero ? "Characters/astro_side_0" : "Characters/drone");
+            view.sharedMaterial = art.unlit;
+        }
+        else
+        {
+            if (fallbackSprite == null) fallbackSprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 1, 1), Vector2.one * 0.5f, 1);
+            view.sprite = fallbackSprite;
+        }
+        view.color = color; views.Add(combatant, view); colors.Add(combatant, color);
+    }
+
+    private void ReturnToMap()
+    {
+        bool victory = battle.Winner == Team.Player;
+        GameSession.Leader.Hp = victory ? heroCombatant.Hp : GameSession.Leader.MaxHp;
+        GameSession.EndEncounter(victory);
+    }
+    private void AddLog(string line) { log.Add(line); if (log.Count > 4) log.RemoveAt(0); }
 
     private void OnGUI()
     {
         if (battle == null) return;
-
-        var scale = Screen.height / VirtualHeight;
-        GUI.matrix = Matrix4x4.Scale(new Vector3(scale, scale, 1f));
-
-        GUILayout.BeginArea(new Rect(20, 20, 300, VirtualHeight - 40));
-
-        foreach (var c in battle.Combatants)
+        PrototypeGui.Begin();
+        PrototypeGui.Panel(new Rect(18, 16, 924, 78));
+        for (int i = 0; i < battle.Combatants.Count; i++)
         {
-            var guard = c.IsDefending ? "   [en garde]" : "";
-            GUILayout.Label($"{c.Name}   PV {c.Hp}/{c.MaxHp}{guard}");
+            var c = battle.Combatants[i]; float x = i == 0 ? 36 : 610;
+            PrototypeGui.Text(new Rect(x, 24, 300, 30), c.Name + (c.IsDefending ? "  [GARDE]" : ""), 23, i == 0 ? PrototypeGui.Cyan : PrototypeGui.Gold);
+            PrototypeGui.Hp(new Rect(x, 63, 208, 9), c.Hp, c.MaxHp);
+            PrototypeGui.Text(new Rect(x + 220, 55, 100, 30), c.Hp + " / " + c.MaxHp, 18);
         }
-
-        GUILayout.Space(12);
-
-        if (battle.IsOver)
+        PrototypeGui.Text(new Rect(402, 36, 200, 30), "MANCHE " + battle.Round, 21, PrototypeGui.Muted);
+        PrototypeGui.Panel(new Rect(18, 364, 300, 158));
+        PrototypeGui.Panel(new Rect(330, 364, 612, 158));
+        if (battle.IsOver && !busy)
         {
-            var won = battle.Winner == Team.Player;
-            GUILayout.Label(won ? "Combat gagné !" : "Combat perdu...");
-
-            if (GameSession.HasPendingEncounter)
-            {
-                // Lancé depuis la carte : on peut y retourner
-                if (!won && GUILayout.Button("Réessayer", GUILayout.Height(32))) pendingCommand = PlayerCommand.Restart;
-                if (GUILayout.Button(won ? "Continuer" : "Retour à la carte", GUILayout.Height(32)))
-                    pendingCommand = PlayerCommand.ReturnToMap;
-            }
-            else if (GUILayout.Button("Recommencer", GUILayout.Height(32)))
-            {
-                // Scène Combat lancée seule depuis l'éditeur (test)
-                pendingCommand = PlayerCommand.Restart;
-            }
-        }
-        else if (IsPlayerTurn)
-        {
-            GUILayout.Label($"À toi : que fait {battle.CurrentActor.Name} ?");
-            if (GUILayout.Button("Attaquer", GUILayout.Height(32))) pendingCommand = PlayerCommand.Attack;
-            if (GUILayout.Button("Se défendre", GUILayout.Height(32))) pendingCommand = PlayerCommand.Defend;
+            bool won = battle.Winner == Team.Player;
+            PrototypeGui.Text(new Rect(34, 373, 270, 30), won ? "VICTOIRE" : "REPLI À LA BASE", 25, PrototypeGui.Gold);
+            if (PrototypeGui.Button(new Rect(34, 410, 268, 40), GameSession.HasPendingEncounter ? "[Entrée / A] Continuer" : "Recommencer"))
+                pending = GameSession.HasPendingEncounter ? Command.Return : Command.Restart;
+            if (!won && PrototypeGui.Button(new Rect(34, 462, 268, 40), "[R] Réessayer, PV pleins")) pending = Command.Restart;
         }
         else
         {
-            GUILayout.Label($"{battle.CurrentActor.Name} réfléchit...");
+            PrototypeGui.Text(new Rect(34, 374, 270, 28), IsPlayerTurn ? "À TOI DE JOUER" : "ACTION EN COURS…", 22, PrototypeGui.Cyan);
+            if (PrototypeGui.Button(new Rect(34, 410, 268, 40), "[Entrée / A] Attaquer", IsPlayerTurn)) pending = Command.Attack;
+            if (PrototypeGui.Button(new Rect(34, 462, 268, 40), "[G / X] Se défendre", IsPlayerTurn)) pending = Command.Defend;
         }
+        PrototypeGui.Text(new Rect(347, 375, 570, 28), "JOURNAL DE COMBAT", 21, PrototypeGui.Muted);
+        for (int i = 0; i < log.Count; i++) PrototypeGui.Text(new Rect(347, 408 + i * 25, 576, 27), log[i], 18);
+        PrototypeGui.End();
+        if (damageText != null && Camera.main != null)
+        {
+            var p = Camera.main.WorldToScreenPoint(damagePosition);
+            var style = new GUIStyle(GUI.skin.label) { fontSize = Mathf.RoundToInt(Screen.height / 20f), alignment = TextAnchor.MiddleCenter };
+            style.normal.textColor = PrototypeGui.Gold;
+            GUI.Label(new Rect(p.x - 70, Screen.height - p.y - 30, 140, 60), damageText, style);
+        }
+    }
 
-        GUILayout.Space(12);
-        foreach (var line in log) GUILayout.Label(line);
-
-        GUILayout.EndArea();
+    private void OnDestroy()
+    {
+        if (backgroundSprite != null) Destroy(backgroundSprite);
+        if (fallbackSprite != null) Destroy(fallbackSprite);
     }
 }

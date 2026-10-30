@@ -51,11 +51,13 @@ public class PlayerMovement : MonoBehaviour
 
     private void OnEnable() => moveAction.Enable();
     private void OnDisable() => moveAction.Disable();
+    private void OnDestroy() => moveAction?.Dispose();
 
     private void Update()
     {
         // Lecture des entrées à chaque frame
-        moveInput = Vector2.ClampMagnitude(moveAction.ReadValue<Vector2>(), 1f);
+        moveInput = GameMenu.IsOpen || SceneTransition.IsBusy || GameSession.HasPendingEncounter
+            ? Vector2.zero : Vector2.ClampMagnitude(moveAction.ReadValue<Vector2>(), 1f);
     }
 
     private void FixedUpdate()

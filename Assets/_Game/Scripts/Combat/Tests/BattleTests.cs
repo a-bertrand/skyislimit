@@ -174,6 +174,29 @@ namespace Game.Combat.Tests
         }
 
         [Test]
+        public void Un_combattant_peut_entrer_en_combat_avec_des_PV_entames()
+        {
+            var hero = new Combatant("Héros", Team.Player, 40, 12, 6, 10, currentHp: 25);
+
+            Assert.AreEqual(25, hero.Hp);
+            Assert.AreEqual(40, hero.MaxHp);
+        }
+
+        [Test]
+        public void Les_PV_de_depart_sont_plafonnes_aux_PV_max()
+        {
+            var hero = new Combatant("Héros", Team.Player, 40, 12, 6, 10, currentHp: 99);
+
+            Assert.AreEqual(40, hero.Hp);
+        }
+
+        [Test]
+        public void Entrer_en_combat_a_0_PV_est_refuse()
+        {
+            Assert.Throws<ArgumentOutOfRangeException>(() => new Combatant("Héros", Team.Player, 40, 12, 6, 10, currentHp: 0));
+        }
+
+        [Test]
         public void L_IA_attaque_l_adversaire_le_plus_affaibli()
         {
             var tank = new Combatant("Tank", Team.Player, 80, 5, 10, 1);
