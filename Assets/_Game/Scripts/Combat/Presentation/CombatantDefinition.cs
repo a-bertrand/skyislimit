@@ -8,6 +8,9 @@ using UnityEngine;
 [CreateAssetMenu(menuName = "RPG/Combattant", fileName = "NouveauCombattant")]
 public class CombatantDefinition : ScriptableObject
 {
+    public Sprite battleSprite;
+    public Sprite[] idleFrames;
+    [Min(1)] public float animationFps = 6;
     public string displayName = "Combattant";
     [Min(1)] public int maxHp = 40;
     [Min(0)] public int attack = 10;

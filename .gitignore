@@ -115,3 +115,6 @@ InitTestScene*.unity*
 
 # macOS
 .DS_Store
+
+# Local LDtk automatic backups (the maps themselves are versioned)
+/ldtk-maps/backups/

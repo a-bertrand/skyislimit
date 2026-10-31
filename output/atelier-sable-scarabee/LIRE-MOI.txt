@@ -1,0 +1,14 @@
+Fichiers à importer manuellement
+
+sable-16.png : tuile opaque de 16 × 16 pixels. Dans la boîte à outils : Planche PNG, Taille des cases = 16, puis Ajouter ce tileset et son calque dans LDtk.
+scarabee-32.png : sprite statique de 32 × 32 pixels, fond transparent. Importer le PNG, dupliquer un monstre, puis lui affecter ce sprite.
+
+Les fichiers restent hors Assets : aucune importation ni synchronisation automatique n'a été effectuée.
+Génération : outil intégré image_gen. Export technique aux dimensions du prototype avec sips. Originaux conservés dans le dossier originals.
+
+Prompt sable :
+Use case: stylized-concept. Asset type: one seamless pixel-art ground tile for a top-down 16-bit science-fiction RPG, to be manually imported into Unity and LDtk. Create a single square tile of pale warm desert sand. Design on an EXACT logical 16 by 16 pixel grid enlarged uniformly to fill the output, every logical pixel a flat square of uniform color. Just 5 muted ochre, warm beige and light sandy gold colors. Very subtle short clustered sand ripples and a few single-pixel darker grains, low contrast so characters remain readable. Orthographic top-down view, completely flat ground, even lighting. All four outermost pixel rows/columns should use the same base beige so copies tile seamlessly in both axes. Full-bleed opaque square, sand covers absolutely the entire image. No objects, no scarabs, no rocks, no plants, no horizon, no vignette, no cast shadows, no perspective, no grid lines, no border, no text. Crisp pixel blocks, absolutely no smooth gradients or fine detail. This is the tile itself, not a preview of multiple repetitions.
+
+Prompt scarabée :
+Use case: stylized-concept. Asset type: one isolated enemy sprite for a top-down retro 16-bit sci-fi JRPG, manually importable into Unity and LDtk. Primary request: a small desert scarab beetle enemy, no accessories. Three-quarter overhead game view, facing downward toward the player with its domed back visible. Sturdy rounded ochre-bronze shell, a few muted turquoise shell highlights and two small turquoise eyes, six short insect legs and tiny mandibles, dark brown pixel outline. Friendly readable game monster rather than horror. Style: genuinely LOW RESOLUTION pixel art designed on a logical 32 by 32 pixel grid, enlarged using crisp uniformly sized square pixels; limited 10-color palette, no antialiasing or gradients. Entire beetle centered, all legs and silhouette inside the image, modest transparent margin around it. Single static pose, not an animation sheet, no repeated views, no text, no labels, no border, no floor, no background, no shadow. Actual transparent background. At final native 32x32 resolution it must remain easily recognizable.
+

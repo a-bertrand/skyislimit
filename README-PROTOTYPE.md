@@ -1,5 +1,7 @@
 # SkyIsLimit — premier bac à sable
 
+**Boîte à outils et plusieurs cartes :** consulter [GUIDE-BOITE-A-OUTILS.md](GUIDE-BOITE-A-OUTILS.md). Menu Unity **Tools → RPG → Boîte à outils**, exemple **Ouvrir l’atelier jouable**. Les limitations v1 ci-dessous décrivent le prototype initial ; le nouveau guide décrit le support actuel.
+
 Un avant-poste spatial, un astronaute, trois drones et une balise à remettre en service. **Nacre** est un nom de travail pour la démo, sans engagement sur l'histoire définitive.
 
 ## Jouer

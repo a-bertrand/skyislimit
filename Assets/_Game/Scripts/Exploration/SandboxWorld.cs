@@ -11,11 +11,15 @@ public sealed class SandboxWorld : MonoBehaviour
 {
     [SerializeField] private LdtkMap map;
     [SerializeField] private SandboxArt art;
+    [SerializeField] private string startingLevel;
+    private readonly List<Sprite> generatedSprites = new List<Sprite>();
+    private ToolboxBehaviour? Behaviour(LdtkEntity e) => map.toolbox?.Find(e.__identifier)?.behaviour;
+    private bool IsEnemy(LdtkEntity e) => Behaviour(e) == ToolboxBehaviour.Enemy || (Behaviour(e) == null && (e.__identifier == "Drone" || e.__identifier == "Sentinel"));
     private LdtkLevel level;
     private Transform player;
     private readonly List<Tile> tiles = new List<Tile>();
     private LdtkEntity nearest;
-    private string notice = "Bienvenue sur Nacre. Consulte le terminal près du point de départ.";
+    private string notice = "E : interagir avec les bornes. Contact avec un monstre : combat.";
     private float noticeUntil = 7;
     private bool interactRequested;
     public LdtkLevel Level => level;
@@ -24,9 +28,16 @@ public sealed class SandboxWorld : MonoBehaviour
 
     private void Awake()
     {
-        try { level = map.Read().levels[0]; }
+        try
+        {
+            var project = map.Read();
+            if (GameSession.WorldMap != map) { GameSession.WorldMap = map; GameSession.WorldLevel = startingLevel; }
+            level = project.levels.FirstOrDefault(l => l.identifier == GameSession.WorldLevel) ?? project.levels[0];
+            GameSession.WorldLevel = level.identifier;
+        }
         catch (System.Exception e) { Debug.LogError("[Bac à sable] " + e.Message, this); enabled = false; return; }
         BuildGround();
+        BuildTiles();
         var spawn = level.Entities.Single(e => e.__identifier == "PlayerSpawn");
         player = BuildPlayer(level.Position(spawn));
         foreach (var entity in level.Entities) BuildEntity(entity);
@@ -109,6 +120,8 @@ public sealed class SandboxWorld : MonoBehaviour
     {
         string type = entity.__identifier;
         if (type == "PlayerSpawn") return;
+        var definition = map.toolbox?.Find(type);
+        if (definition != null) { BuildCatalogEntity(entity, definition); return; }
         bool enemy = type == "Drone" || type == "Sentinel";
         if (enemy && GameSession.IsDefeated(level.EncounterId(entity))) return;
         var root = Root(type + "_" + entity.iid.Substring(0, 6), level.Position(entity));
@@ -197,13 +210,13 @@ public sealed class SandboxWorld : MonoBehaviour
         go.AddComponent<AudioListener>();
     }
 
-    private int EnemyCount => level.Entities.Count(e => e.__identifier == "Drone" || e.__identifier == "Sentinel");
-    private int DefeatedCount => level.Entities.Count(e => (e.__identifier == "Drone" || e.__identifier == "Sentinel") && GameSession.IsDefeated(level.EncounterId(e)));
+    private int EnemyCount => level.Entities.Count(IsEnemy);
+    private int DefeatedCount => level.Entities.Count(e => IsEnemy(e) && GameSession.IsDefeated(level.EncounterId(e)));
 
     private void Update()
     {
         if (player == null || GameMenu.IsOpen || SceneTransition.IsBusy || GameSession.HasPendingEncounter) { interactRequested = false; return; }
-        nearest = level.Entities.Where(e => e.__identifier == "Medbay" || e.__identifier == "Beacon" || e.__identifier == "Sign")
+        nearest = level.Entities.Where(e => e.__identifier == "Medbay" || e.__identifier == "Beacon" || e.__identifier == "Sign" || e.__identifier == "Portal" || Behaviour(e) == ToolboxBehaviour.Heal || Behaviour(e) == ToolboxBehaviour.Beacon || Behaviour(e) == ToolboxBehaviour.Sign || Behaviour(e) == ToolboxBehaviour.Portal)
             .Where(e => Vector2.Distance(player.position, level.Position(e)) < 1.6f)
             .OrderBy(e => Vector2.Distance(player.position, level.Position(e))).FirstOrDefault();
         if (interactRequested || Keyboard.current?.eKey.wasPressedThisFrame == true || Gamepad.current?.buttonSouth.wasPressedThisFrame == true)
@@ -215,8 +228,13 @@ public sealed class SandboxWorld : MonoBehaviour
     private void Interact()
     {
         if (nearest == null) return;
-        switch (nearest.__identifier)
+        var definition = map.toolbox?.Find(nearest.__identifier);
+        string action = definition == null ? nearest.__identifier : definition.behaviour == ToolboxBehaviour.Heal ? "Medbay" : definition.behaviour.ToString();
+        switch (action)
         {
+            case "Portal":
+                GameSession.Travel(nearest.Text("Destination")); return;
+            case "Sign": notice = nearest.Text("Text", definition?.text ?? "Explore la carte, puis active la balise."); break;
             case "Medbay": GameSession.Leader.Hp = GameSession.Leader.MaxHp; notice = "Équipe soignée. La borne reste utilisable à volonté."; break;
             case "Beacon":
                 if (DefeatedCount < EnemyCount) notice = "Signal brouillé : neutralise les " + (EnemyCount - DefeatedCount) + " drones restants.";
@@ -232,14 +250,14 @@ public sealed class SandboxWorld : MonoBehaviour
         if (level == null || GameMenu.IsOpen) return;
         PrototypeGui.Begin();
         PrototypeGui.Panel(new Rect(18, 16, 325, 74));
-        PrototypeGui.Text(new Rect(32, 23, 300, 28), "NACRE / AVANT-POSTE 07", 23, PrototypeGui.Cyan);
+        PrototypeGui.Text(new Rect(32, 23, 300, 28), level.identifier, 23, PrototypeGui.Cyan);
         PrototypeGui.Text(new Rect(32, 53, 300, 28), "" + GameSession.Leader.Name + "   " + GameSession.Leader.Hp + " / " + GameSession.Leader.MaxHp + " PV", 20);
         PrototypeGui.Panel(new Rect(638, 16, 304, 74));
-        PrototypeGui.Text(new Rect(654, 24, 276, 28), GameSession.BeaconActivated ? "SIGNAL RÉTABLI" : "RÉTABLIR LE SIGNAL", 22, PrototypeGui.Gold);
+        PrototypeGui.Text(new Rect(654, 24, 276, 28), GameSession.BeaconActivated ? "SIGNAL RÉTABLI" : level.Entities.Any(e => e.__identifier == "Beacon" || Behaviour(e) == ToolboxBehaviour.Beacon) ? "RÉTABLIR LE SIGNAL" : "EXPLORATION", 22, PrototypeGui.Gold);
         PrototypeGui.Text(new Rect(654, 54, 276, 28), "Drones neutralisés : " + DefeatedCount + " / " + EnemyCount, 18);
         if (nearest != null && !SceneTransition.IsBusy)
         {
-            string action = nearest.__identifier == "Medbay" ? "Se soigner" : nearest.__identifier == "Beacon" ? "Activer la balise" : "Lire le terminal";
+            string action = nearest.__identifier == "Portal" || Behaviour(nearest) == ToolboxBehaviour.Portal ? "Changer de carte" : nearest.__identifier == "Medbay" || Behaviour(nearest) == ToolboxBehaviour.Heal ? "Se soigner" : nearest.__identifier == "Beacon" || Behaviour(nearest) == ToolboxBehaviour.Beacon ? "Activer la balise" : "Lire le terminal";
             if (PrototypeGui.Button(new Rect(330, 405, 300, 40), "[E / A] " + action)) interactRequested = true;
         }
         if (Time.time < noticeUntil)
@@ -252,5 +270,70 @@ public sealed class SandboxWorld : MonoBehaviour
         PrototypeGui.End();
     }
 
-    private void OnDestroy() { foreach (var tile in tiles) if (tile != null) Destroy(tile); }
+    private void OnDestroy()
+    {
+        foreach (var tile in tiles) if (tile != null) Destroy(tile);
+        foreach (var sprite in generatedSprites) if (sprite != null) Destroy(sprite);
+    }
+
+    private void BuildCatalogEntity(LdtkEntity entity, WorldToolbox.Entry definition)
+    {
+        bool enemy = definition.behaviour == ToolboxBehaviour.Enemy;
+        if (enemy && GameSession.IsDefeated(level.EncounterId(entity))) return;
+        var root = Root(definition.id + "_" + entity.iid.Substring(0, Mathf.Min(6, entity.iid.Length)), level.Position(entity));
+        root.SetActive(false);
+        var sr = new GameObject("Visuel").AddComponent<SpriteRenderer>();
+        sr.transform.SetParent(root.transform, false); sr.sprite = definition.sprite;
+        sr.color = definition.tint; sr.sharedMaterial = art.lit;
+        if (definition.hover) sr.gameObject.AddComponent<Hover>();
+        if (definition.lightIntensity > 0) Lamp(root.transform, definition.lightColor, definition.lightIntensity, definition.lightRadius);
+        if (definition.animation != null && definition.animation.Length > 0)
+            sr.gameObject.AddComponent<ToolboxAnimation>().Setup(sr, definition.animation, definition.framesPerSecond);
+        if (enemy)
+        {
+            var col = root.AddComponent<CircleCollider2D>(); col.radius = .52f; col.isTrigger = true;
+            root.AddComponent<EncounterTrigger>().Setup(level.EncounterId(entity), definition.combat, "SandboxCombat");
+            var movement = root.AddComponent<SandboxPatrol>();
+            movement.radius = Mathf.Clamp(entity.Number("PatrolRadius", definition.patrolRadius), 0, 128) / 16;
+            movement.speed = Mathf.Clamp(entity.Number("Speed", definition.speed), 0, 4);
+        }
+        else if (definition.solid)
+        {
+            var col = root.AddComponent<BoxCollider2D>(); col.size = definition.colliderSize; col.offset = Vector2.up * col.size.y * .5f;
+        }
+        if (definition.behaviour == ToolboxBehaviour.Heal || definition.behaviour == ToolboxBehaviour.Beacon)
+            Lamp(root.transform, definition.behaviour == ToolboxBehaviour.Heal ? Color.green : PrototypeGui.Cyan, 1.2f, 2.5f);
+        root.SetActive(true);
+    }
+
+    private void BuildTiles()
+    {
+        // LDtk stocke les calques du premier plan vers l'arrière-plan.
+        var cache = new Dictionary<string, Sprite>();
+        for (int index = level.layerInstances.Length - 1; index >= 0; index--)
+        {
+            var layer = level.layerInstances[index];
+            if (!layer.visible) continue;
+            var placed = (layer.autoLayerTiles ?? System.Array.Empty<LdtkTile>()).Concat(layer.gridTiles ?? System.Array.Empty<LdtkTile>());
+            foreach (var tile in placed)
+            {
+                var texture = map.Texture(layer.__tilesetDefUid);
+                if (texture == null) throw new System.FormatException("Tileset manquant pour " + layer.__identifier);
+                int size = layer.__gridSize;
+                string key = layer.__tilesetDefUid + "/" + tile.src[0] + "/" + tile.src[1] + "/" + size;
+                if (!cache.TryGetValue(key, out var sprite))
+                {
+                    sprite = UnityEngine.Sprite.Create(texture, new Rect(tile.src[0], texture.height - tile.src[1] - size, size, size), Vector2.one * .5f, 16);
+                    cache.Add(key, sprite); generatedSprites.Add(sprite);
+                }
+                var sr = new GameObject(layer.__identifier + " tuile").AddComponent<SpriteRenderer>();
+                sr.transform.SetParent(transform);
+                sr.transform.position = new Vector3((tile.px[0] + size * .5f) / 16, -(tile.px[1] + size * .5f) / 16, 0);
+                sr.sprite = sprite; sr.sharedMaterial = art.lit;
+                sr.sortingOrder = -90 + (level.layerInstances.Length - index);
+                sr.flipX = (tile.f & 1) != 0; sr.flipY = (tile.f & 2) != 0;
+                sr.color = new Color(1, 1, 1, layer.__opacity * tile.a);
+            }
+        }
+    }
 }

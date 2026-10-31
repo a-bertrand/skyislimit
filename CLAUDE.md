@@ -78,3 +78,13 @@ Assets/
 - Combat : commandes clavier/manette/souris, attaques séquencées et feedback de dégâts, fond spatial généré. Transitions avec fondu. Défaite = soin + respawn au départ ; victoire = PV et position conservés, ennemi supprimé pour la session.
 - Soin contextuel avec E, objectif « trois drones puis balise », R pour rejouer après l'objectif. Pas de sauvegarde disque.
 - Guide complet et provenance des images : `README-PROTOTYPE.md`. Contrôles relançables : `SandboxChecks`, rapports dans `Logs/sandbox-*`.
+
+
+## Boîte à outils LDtk (31/10/2026)
+- Guide actuel : `GUIDE-BOITE-A-OUTILS.md`. Menus `Tools/RPG/Boîte à outils` et `Ouvrir l'atelier jouable`.
+- `WorldToolbox` : catalogue ScriptableObject des entités (Enemy/Decoration/Heal/Beacon/Sign/Portal), sprites, boucles d'animation, patrouille, lumière, collision, fiches de combat.
+- `WorldToolboxWindow` : ajout/duplication/retrait, import PNG, synchronisation des définitions vers LDtk, création de niveaux, choix du départ dans la scène. `ToolboxSync` conserve le DOM JSON inconnu et sauvegarde avant écriture.
+- `LdtkMapImporter` embarque catalogue et textures. Plusieurs niveaux, champs numériques/texte, Tiles et AutoLayer générés sont pris en charge. Terrain 16 px, monde unique, niveaux intégrés, pas de décalages. Chaque niveau requiert seulement un PlayerSpawn (balise/soin facultatifs).
+- `Atelier.ldtk` est une copie de travail indépendante de Nacre avec Laboratoire, deux portes et DroneCuivre. Scène Atelier créée par API Unity. Nacre reste le fichier original de l'utilisateur.
+- `GameSession.WorldLevel` conserve le niveau entre combats et portes ; balises par niveau, rencontres par IID. Pas de sauvegarde disque.
+- Tests : `ToolboxChecks` (transformation/import), `ToolboxPlayChecks` (vraies scènes/physique/coroutines). Rapports `Logs/toolbox-*`.

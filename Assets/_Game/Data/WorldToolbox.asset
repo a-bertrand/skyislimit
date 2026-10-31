@@ -1,0 +1,192 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4280dbc6e8ce34e0d86da343b33b757f, type: 3}
+  m_Name: WorldToolbox
+  m_EditorClassIdentifier: Assembly-CSharp::WorldToolbox
+  formatVersion: 1
+  entries:
+  - id: Sand
+    behaviour: 1
+    sprite: {fileID: 21300000, guid: 089ff87f664ca482fb90ad63bbac10d6, type: 3}
+    animation: []
+    framesPerSecond: 6
+    tint: {r: 0.65, g: 0.8, b: 1, a: 1}
+    solid: 0
+    hover: 0
+    lightColor: {r: 0, g: 1, b: 1, a: 1}
+    lightIntensity: 0
+    lightRadius: 2.5
+    colliderSize: {x: 0.7, y: 0.4}
+    combat: {fileID: 11400000, guid: c6dfef82118db442c81b5bd35c81f625, type: 2}
+    patrolRadius: 24
+    speed: 0.8
+    text: Bienvenue !
+  - id: Crate
+    behaviour: 1
+    sprite: {fileID: 21300000, guid: 89811aa871e414dbcba5727fc758a5d5, type: 3}
+    animation: []
+    framesPerSecond: 6
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    solid: 1
+    hover: 0
+    lightColor: {r: 0, g: 1, b: 1, a: 1}
+    lightIntensity: 0
+    lightRadius: 2.5
+    colliderSize: {x: 0.7, y: 0.4}
+    combat: {fileID: 0}
+    patrolRadius: 24
+    speed: 0.8
+    text: Bienvenue !
+  - id: Rock
+    behaviour: 1
+    sprite: {fileID: 21300000, guid: 3e56a2d253bfb43ae80ef3d537de16e5, type: 3}
+    animation: []
+    framesPerSecond: 6
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    solid: 1
+    hover: 0
+    lightColor: {r: 0, g: 1, b: 1, a: 1}
+    lightIntensity: 0
+    lightRadius: 2.5
+    colliderSize: {x: 0.7, y: 0.4}
+    combat: {fileID: 0}
+    patrolRadius: 24
+    speed: 0.8
+    text: Bienvenue !
+  - id: Lamp
+    behaviour: 1
+    sprite: {fileID: 21300000, guid: 19b6b061d390845e8babdb46a4692495, type: 3}
+    animation: []
+    framesPerSecond: 6
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    solid: 1
+    hover: 0
+    lightColor: {r: 1, g: 0.75, b: 0.3, a: 1}
+    lightIntensity: 1.2
+    lightRadius: 2.5
+    colliderSize: {x: 0.7, y: 0.4}
+    combat: {fileID: 0}
+    patrolRadius: 24
+    speed: 0.8
+    text: Bienvenue !
+  - id: Plant
+    behaviour: 1
+    sprite: {fileID: 21300000, guid: e4adfcf365eb247a88997005886e945e, type: 3}
+    animation: []
+    framesPerSecond: 6
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    solid: 0
+    hover: 0
+    lightColor: {r: 0, g: 1, b: 1, a: 1}
+    lightIntensity: 0.6
+    lightRadius: 2.5
+    colliderSize: {x: 0.7, y: 0.4}
+    combat: {fileID: 0}
+    patrolRadius: 24
+    speed: 0.8
+    text: Bienvenue !
+  - id: Medbay
+    behaviour: 2
+    sprite: {fileID: 21300000, guid: 00796152389c7435fb5434dde24e8551, type: 3}
+    animation: []
+    framesPerSecond: 6
+    tint: {r: 0.6, g: 1, b: 0.75, a: 1}
+    solid: 1
+    hover: 0
+    lightColor: {r: 0, g: 1, b: 1, a: 1}
+    lightIntensity: 0
+    lightRadius: 2.5
+    colliderSize: {x: 0.7, y: 0.4}
+    combat: {fileID: 0}
+    patrolRadius: 24
+    speed: 0.8
+    text: Bienvenue !
+  - id: Beacon
+    behaviour: 3
+    sprite: {fileID: 21300000, guid: 00796152389c7435fb5434dde24e8551, type: 3}
+    animation: []
+    framesPerSecond: 6
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    solid: 1
+    hover: 0
+    lightColor: {r: 0, g: 1, b: 1, a: 1}
+    lightIntensity: 0
+    lightRadius: 2.5
+    colliderSize: {x: 0.7, y: 0.4}
+    combat: {fileID: 0}
+    patrolRadius: 24
+    speed: 0.8
+    text: Bienvenue !
+  - id: Sign
+    behaviour: 4
+    sprite: {fileID: 21300000, guid: 84ab1af1f81854b658632c57610bb67f, type: 3}
+    animation: []
+    framesPerSecond: 6
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    solid: 1
+    hover: 0
+    lightColor: {r: 0, g: 1, b: 1, a: 1}
+    lightIntensity: 0
+    lightRadius: 2.5
+    colliderSize: {x: 0.7, y: 0.4}
+    combat: {fileID: 0}
+    patrolRadius: 24
+    speed: 0.8
+    text: Explore la carte. Contact ennemi = combat ; E = interagir.
+  - id: Portal
+    behaviour: 5
+    sprite: {fileID: 21300000, guid: 00796152389c7435fb5434dde24e8551, type: 3}
+    animation: []
+    framesPerSecond: 6
+    tint: {r: 1, g: 0.6, b: 1, a: 1}
+    solid: 0
+    hover: 0
+    lightColor: {r: 0, g: 1, b: 1, a: 1}
+    lightIntensity: 0
+    lightRadius: 2.5
+    colliderSize: {x: 0.7, y: 0.4}
+    combat: {fileID: 0}
+    patrolRadius: 24
+    speed: 0.8
+    text: Bienvenue !
+  - id: DroneCuivre
+    behaviour: 0
+    sprite: {fileID: 21300000, guid: 404b1db56a8384d579368a9603dddb92, type: 3}
+    animation: []
+    framesPerSecond: 6
+    tint: {r: 1, g: 0.65, b: 0.3, a: 1}
+    solid: 0
+    hover: 1
+    lightColor: {r: 0, g: 1, b: 1, a: 1}
+    lightIntensity: 0
+    lightRadius: 2.5
+    colliderSize: {x: 0.7, y: 0.4}
+    combat: {fileID: 11400000, guid: 6bb52e7fc6591401480808f41788fb39, type: 2}
+    patrolRadius: 16
+    speed: 0.5
+    text: Bienvenue !
+  - id: Scarabee
+    behaviour: 0
+    sprite: {fileID: 21300000, guid: dde556f5d16684360b3b050b1482d581, type: 3}
+    animation: []
+    framesPerSecond: 6
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    solid: 0
+    hover: 0
+    lightColor: {r: 0, g: 1, b: 1, a: 1}
+    lightIntensity: 0
+    lightRadius: 2.5
+    colliderSize: {x: 0.7, y: 0.4}
+    combat: {fileID: 11400000, guid: 5662453938308430e98cd23fd5d1e163, type: 2}
+    patrolRadius: 24
+    speed: 0.8
+    text: Bienvenue !

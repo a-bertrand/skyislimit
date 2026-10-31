@@ -177,6 +177,13 @@ public class BattleController : MonoBehaviour
         {
             view.sprite = art.Sprite(hero ? "Characters/astro_side_0" : "Characters/drone");
             view.sharedMaterial = art.unlit;
+            var definition = GameSession.PendingEnemy != null ? GameSession.PendingEnemy : enemy;
+            if (!hero && definition != null)
+            {
+                if (definition.battleSprite != null) view.sprite = definition.battleSprite;
+                if (definition.idleFrames != null && definition.idleFrames.Length > 0)
+                    view.gameObject.AddComponent<ToolboxAnimation>().Setup(view, definition.idleFrames, definition.animationFps);
+            }
         }
         else
         {

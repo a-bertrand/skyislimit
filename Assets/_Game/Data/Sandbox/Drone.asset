@@ -12,7 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e2fe57100f48945b2a026d4f84a38318, type: 3}
   m_Name: Drone
   m_EditorClassIdentifier: Assembly-CSharp::CombatantDefinition
-  displayName: "Drone \xE9claireur"
+  battleSprite: {fileID: 21300000, guid: 404b1db56a8384d579368a9603dddb92, type: 3}
+  idleFrames: []
+  animationFps: 6
+  displayName: Scarabee
   maxHp: 24
   attack: 7
   defense: 2

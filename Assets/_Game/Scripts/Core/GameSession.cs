@@ -19,7 +19,21 @@ public static class GameSession
     public static CombatantDefinition PendingEnemy { get; private set; }
     public static string ReturnSceneName { get; private set; }
     public static bool HasPendingEncounter => !string.IsNullOrEmpty(PendingEncounterId);
-    public static bool BeaconActivated { get; set; }
+    public static LdtkMap WorldMap { get; set; }
+    public static string WorldLevel { get; set; }
+    private static readonly HashSet<string> activatedBeacons = new HashSet<string>();
+    public static bool BeaconActivated
+    {
+        get => activatedBeacons.Contains(WorldLevel ?? "");
+        set { if (value) activatedBeacons.Add(WorldLevel ?? ""); else activatedBeacons.Remove(WorldLevel ?? ""); }
+    }
+    public static void Travel(string destination)
+    {
+        if (HasPendingEncounter || SceneTransition.IsBusy || WorldMap == null) return;
+        if (!System.Array.Exists(WorldMap.Read().levels, l => l.identifier == destination)) return;
+        WorldLevel = destination; playerReturnPosition = null;
+        SceneTransition.Load(SceneManager.GetActiveScene().name);
+    }
 
     /// <summary>L'équipe du joueur (un seul membre pour l'instant). Créée à la première lecture.</summary>
     public static IReadOnlyList<PartyMember> Party
@@ -43,6 +57,7 @@ public static class GameSession
     {
         defeatedEncounters.Clear();
         party.Clear();
+        activatedBeacons.Clear(); WorldMap = null; WorldLevel = null;
         playerReturnPosition = null;
         BeaconActivated = false;
         Time.timeScale = 1f;
@@ -84,6 +99,7 @@ public static class GameSession
     {
         if (HasPendingEncounter || SceneTransition.IsBusy) return;
         defeatedEncounters.Clear();
+        activatedBeacons.Clear();
         BeaconActivated = false;
         Leader.Hp = Leader.MaxHp;
         playerReturnPosition = null;
